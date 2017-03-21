@@ -23,8 +23,8 @@ io.on('connection', (socket) => {
     console.log('createMessage', newMessage)
 
     io.emit('newMessage', {     //io emiits to all listerns.  socket only to a single listener.
-        from: nMes.from,
-        text: nMes.text,
+        from: newMessage.from,
+        text: newMessage.text,
         createdAt: new Date().getTime()
     });
   });
