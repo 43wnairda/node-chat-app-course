@@ -1,7 +1,7 @@
 var socket = io();
 
-socket.on('connect', function () {          <!--using funct as opopoised to arrow syntax as es6 wont work anywhere but chrome-->
-  console.log('connected to server');
+socket.on('connect', function (message) {          <!--using funct as opopoised to arrow syntax as es6 wont work anywhere but chrome-->
+  console.log('connected to server', message);
 });
 
 socket.on('disconnect', function ()  {
