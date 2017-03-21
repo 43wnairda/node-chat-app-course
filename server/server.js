@@ -17,14 +17,16 @@ app.use(express.static(publicPath));
 io.on('connection', (socket) => {
   console.log('new user connected');
 
-  socket.emit('newMessage', {
-    from: 'me@myplace.com',
-    text: 'Hey, Hows it going',
-    createdAt: 210420171440
-  });
 
-  socket.on('createMessage', (nMes) => {
-    console.log('createMessage', nMes)
+
+  socket.on('createMessage', (newMessage) => {
+    console.log('createMessage', newMessage)
+
+    io.emit('newMessage', {     //io emiits to all listerns.  socket only to a single listener.
+        from: nMes.from,
+        text: nMes.text,
+        createdAt: new Date().getTime()
+    });
   });
 
   socket.on('disconnect', (socket) => {
