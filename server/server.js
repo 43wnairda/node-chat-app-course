@@ -3,6 +3,7 @@ const http = require('http');
 const express = require('express')
 const socketIO = require('socket.io');
 
+const {generateMessage} = require('./utils/message');
 const publicPath = path.join(__dirname, '/../public');
 
 const port = process.env.PORT || 3000;
@@ -18,30 +19,20 @@ io.on('connection', (socket) => {
   console.log('new user connected');
 
   //socket.emit from the Admin message welcome to the chat app
-  socket.emit('newMessage', {
-    from: 'Admin',
-    text: 'Welcome to the chat app',
-    createdAt: new Date().getTime()
-  });
+  socket.emit('newMessage', generateMessage('Admin', 'Welcome to the chat app'));
+  
 ///////
 //socket.broadcast.emit from Admin text New user joined
 
-socket.broadcast.emit('newMessage', {
-    from: 'Admin',
-    text: 'new user joined',
-    createdAt: new Date().getTime()
-});
+socket.broadcast.emit('newMessage', generateMessage('Admin', 'new user joined'));
 /////
 
 
   socket.on('createMessage', (newMessage) => {
     console.log('createMessage', newMessage)
 
-    io.emit('newMessage', {     //io emiits to all listerns.  socket only to a single listener.
-        from: newMessage.from,
-        text: newMessage.text,
-        createdAt: new Date().getTime()
-    });
+    io.emit('newMessage', generateMessage(newMessage.from, newMessage.text));     //io emiits to all listerns.  socket only to a single listener.
+
     // socket.broadcast.emit('newMessage', {     //isocket.broadcast.emiit to all listerns except the sender.
     //     from: newMessage.from,
     //     text: newMessage.text,
