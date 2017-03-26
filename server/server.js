@@ -32,7 +32,7 @@ socket.broadcast.emit('newMessage', generateMessage('Admin', 'new user joined'))
     console.log('createMessage', newMessage)
 
     io.emit('newMessage', generateMessage(newMessage.from, newMessage.text));     //io emiits to all listerns.  socket only to a single listener.
-    callback('this string is sent from the server');
+    callback();
     // socket.broadcast.emit('newMessage', {     //isocket.broadcast.emiit to all listerns except the sender.
     //     from: newMessage.from,
     //     text: newMessage.text,
