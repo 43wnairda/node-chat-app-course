@@ -10,10 +10,10 @@ socket.on('disconnect', function ()  {
 });
 
 socket.on('newMessage', function(message) {
-    console.log('New Message', message);
+    var formattedTime = moment(message.createdAt).format('h:mm a');
 
     var li = jQuery('<li></li>');
-    li.text(`${message.from}: ${message.text}`);
+    li.text(`${message.from}: ${formattedTime}: ${message.text}`);
 
     jQuery('#messages').append(li);
 });
@@ -21,8 +21,9 @@ socket.on('newMessage', function(message) {
 socket.on('newLocationMessage', function (message) {
     var li = jQuery('<li></li>');
     var a = jQuery('<a target="_blank">my current location</a>');
+    var formattedTime = moment(message.createdAt).format('h:mm a');
 
-    li.text(`S{message.from}: `);     //the 2 statements are better than using tempolate strings as they prevent html injection attacks
+    li.text(`${formattedTime}: ${message.from}: `);     //the 2 statements are better than using tempolate strings as they prevent html injection attacks
     a.attr('href', message.url);
     li.append(a);
     jQuery('#messages').append(li);
