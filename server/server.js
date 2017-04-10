@@ -1,79 +1,67 @@
-const path = require('path');  //this is a build in node module.  doesn't need installing
+const path = require('path');
 const http = require('http');
-const express = require('express')
+const express = require('express');
 const socketIO = require('socket.io');
 
 const {generateMessage, generateLocationMessage} = require('./utils/message');
 const {isRealString} = require('./utils/validation');
 const {Users} = require('./utils/users');
 
-const publicPath = path.join(__dirname, '/../public');
+const publicPath = path.join(__dirname, '../public');
 const port = process.env.PORT || 3000;
-
 var app = express();
-var server = http.createServer(app);      //reson to use this instead of express build in http service is cos we want to use socket.io
-var io = socketIO(server);                //giving us 2 way comms between client and server.
+var server = http.createServer(app);
+var io = socketIO(server);
 var users = new Users();
 
 app.use(express.static(publicPath));
 
-
 io.on('connection', (socket) => {
-  console.log('new user connected');
+  console.log('New user connected');
 
-  //socket.emit from the Admin message welcome to the chat app
+  socket.on('join', (params, callback) => {
+    if (!isRealString(params.name) || !isRealString(params.room)) {
+      return callback('Name and room name are required.');
+    }
 
-/////
+    socket.join(params.room);
+    users.removeUser(socket.id);
+    users.addUser(socket.id, params.name, params.room);
 
-socket.on('join', (params, callback) => {
-  if (!isRealString(params.name) || !isRealString(params.room)) {
-    return callback('Name and room name are required');
-  }
-
-
-
-  socket.join(params.room); //join a room and only wsee messages for that room.
-  users.removeUser(socket.id);
-  users.addUser(socket.id, params.name, params.room);
-  //socket.leave('room name') will exit you from room so you no longer get messages for that room
-
-  //io.emit -> io.to('the office fans').emit    sends to everyone in that room
-  //socket.broadcast.emit -> socket.broadcast.to('the office fans').emit     sends to everyone in that room except for the current user
-  //socket.emit stays the same.
-  io.to(params.room).emit('updateUserList', users.getUserList(params.room));
-  socket.emit('newMessage', generateMessage('Admin', 'Welcome to the chat app'));
-  socket.broadcast.to(params.room).emit('newMessage', generateMessage('Admin', `${params.name} has joined`));
-callback();
-});
-
-  socket.on('createMessage', (newMessage,callback) => {
-    console.log('createMessage', newMessage)
-
-    io.emit('newMessage', generateMessage(newMessage.from, newMessage.text));     //io emiits to all listerns.  socket only to a single listener.
+    io.to(params.room).emit('updateUserList', users.getUserList(params.room));
+    socket.emit('newMessage', generateMessage('Admin', 'Welcome to the chat app'));
+    socket.broadcast.to(params.room).emit('newMessage', generateMessage('Admin', `${params.name} has joined.`));
     callback();
-    // socket.broadcast.emit('newMessage', {     //isocket.broadcast.emiit to all listerns except the sender.
-    //     from: newMessage.from,
-    //     text: newMessage.text,
-    //     createdAt: new Date().getTime()
-    // });
+  });
+
+  socket.on('createMessage', (message, callback) => {
+    var user = users.getUser(socket.id);
+
+    if (user && isRealString(message.text)) {
+      io.to(user.room).emit('newMessage', generateMessage(user.name, message.text));
+    }
+
+    callback();
   });
 
   socket.on('createLocationMessage', (coords) => {
-    io.emit('newLocationMessage', generateLocationMessage('Admin', coords.latitude, coords.longitude));
+    var user = users.getUser(socket.id);
+
+    if (user) {
+      io.to(user.room).emit('newLocationMessage', generateLocationMessage(user.name, coords.latitude, coords.longitude));
+    }
   });
 
-  socket.on('disconnect', (socket) => {
+  socket.on('disconnect', () => {
     var user = users.removeUser(socket.id);
 
     if (user) {
-
       io.to(user.room).emit('updateUserList', users.getUserList(user.room));
-      io.to(user.room).emit('newMessage', generateMessage('Admin', `${user.name} has left`));
+      io.to(user.room).emit('newMessage', generateMessage('Admin', `${user.name} has left.`));
     }
   });
 });
 
-server.listen(port, () =>{
-  console.log(`Listening on port: ${3000}`);
+server.listen(port, () => {
+  console.log(`Server is up on ${port}`);
 });
-/////abiove. simple node servder serving up the static html file in /public
